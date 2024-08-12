@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,31 +12,42 @@ namespace OtusHW.Async_Task
     {
         static async Task Main(string[] args)
         {
-            string[] files = { "C:\\OtusHW.Source\\file1.txt", "C:\\OtusHW.Source\\file2.txt", "C:\\OtusHW.Source\\file3.txt" };
+            Stopwatch sw = new Stopwatch();
+            string folderPath = ("C:\\OtusHW.Source\\");
 
-            Task<int>[] tasks = files.Select(file => FileReader(file)).ToArray();
+            sw.Start();
+            List<Task<int>> tasks = new List<Task<int>>();
+
+            foreach (string filePath in Directory.GetFiles(folderPath))
+            {
+                tasks.Add(Task.Run(() => CountSpaces(filePath)));
+            }
 
             int[] results = await Task.WhenAll(tasks);
+            sw.Stop();
 
-            int totalSpaces = results.Sum();
-
-            Console.WriteLine($"Total spaces: {totalSpaces}");
+            Console.WriteLine($"Total spaces: {results.Sum()}.");
+            Console.WriteLine($"Time: {sw.Elapsed}");
         }
-        static async Task<int> FileReader(string path)
+        static async Task<int> CountSpaces(string path)
         {
             int spaceCount = 0;
-            using(StreamReader sr = new StreamReader(path))
+            Console.WriteLine($"Чтение файла");
+            using (StreamReader sr = new StreamReader(path))
             {
                 string content = await sr.ReadToEndAsync();
                 spaceCount += content.Count(c => c == ' ');
             }
             return spaceCount;
         }
-        static async Task<int> FolderReader(string path)
+        static async Task<int> CountFolderSpaces(string path)
         {
-            string[] files = Directory.GetFiles(path);
+            List<Task<int>> tasks = new List<Task<int>>();
 
-            Task<int>[] tasks = files.Select(file => FileReader(file)).ToArray();
+            foreach (string filePath in Directory.GetFiles(path))
+            {
+                tasks.Add(Task.Run(() => CountSpaces(filePath)));
+            }
 
             int[] results = await Task.WhenAll(tasks);
 
